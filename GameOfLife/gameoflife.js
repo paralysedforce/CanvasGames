@@ -15,6 +15,8 @@ document.onkeydown = function(e){
     if (e.keyCode == 32) GRID = new Grid();
 };
 
+
+const FPS = 10;
 window.requestAnimFrame = function(callback){
     return (
         window.requestAnimationFrame       || 
@@ -25,9 +27,9 @@ window.requestAnimFrame = function(callback){
         window.setTimeout(callback, 1000 / 60));
     }();
 
-var SPACE_LENGTH = 15;
-var GRID_WIDTH = Math.floor(WIDTH / SPACE_LENGTH);
-var GRID_HEIGHT = Math.floor(HEIGHT / SPACE_LENGTH);
+const SPACE_LENGTH = 15;
+const GRID_WIDTH = Math.floor(WIDTH / SPACE_LENGTH);
+const GRID_HEIGHT = Math.floor(HEIGHT / SPACE_LENGTH);
 
 var GRID = new Grid();
 
@@ -106,11 +108,18 @@ function Space(x, y){
 }
 
 function getNextFrame(){
-    ctx.clearRect(0, 0, WIDTH, HEIGHT);
-    GRID.update();
-    GRID.draw();
+    if (Date.now() - last_updated > 1000. / FPS){
+        ctx.clearRect(0, 0, WIDTH, HEIGHT);
+        GRID.update();
+        GRID.draw();
+        last_updated = Date.now();
+    }
     window.requestAnimFrame(getNextFrame);
 }
 
 
-window.requestAnimFrame(getNextFrame);
+function main(){
+    last_updated = Date.now();
+    window.requestAnimFrame(getNextFrame);
+}
+main();
