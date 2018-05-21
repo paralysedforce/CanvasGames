@@ -10,10 +10,28 @@ window.addEventListener('resize', function(){
     canvas.height = HEIGHT;
     canvas.width = WIDTH;
 });
+var mouse = {x : WIDTH/2, y : HEIGHT / 2, down: false};
+
+canvas.addEventListener('mousedown',  function(e){
+    mouse.down = true;
+});
+
+canvas.addEventListener('mouseup', function(e){
+    mouse.down = false;
+});
+
+canvas.addEventListener('mousemove', function(e){
+    mouse.x = e.x;
+    mouse.y = e.y;
+});
 
 document.onkeydown = function(e){
-    if (e.keyCode == 32) GRID = new Grid();
+    if (e.keyCode == 82) GRID = new Grid();
+    if (e.keyCode == 67) GRID.clear()
 };
+
+
+
 
 
 const FPS = 10;
@@ -54,6 +72,23 @@ function Grid(){
         if (this.spaces[space.x][space.y].alive) count--;
         return count;
     }
+
+    this.clear = function(){
+        for (var i = 0; i < GRID_WIDTH; i++){
+            for (var j = 0; j < GRID_HEIGHT; j++){
+                this.spaces[i][j].alive = false;
+            }
+        }
+    }
+
+    this.unfreeze = function(){
+        for (var i = 0; i < GRID_WIDTH; i++){
+            for (var j = 0; j < GRID_HEIGHT; j++){
+                this.spaces[i][j].frozen = false;
+            }
+        }
+    }
+   
     
     this.update = function(){
         var newSpaces = _initialize_spaces();
@@ -61,6 +96,7 @@ function Grid(){
         for (var i = 0; i < GRID_WIDTH; i++){
             for (var j = 0; j < GRID_HEIGHT; j++){
                 newSpaces[i][j].alive = this.spaces[i][j].getNewState();
+                newSpaces[i][j].frozen = this.spaces[i][j].frozen;
             }
         }
         this.spaces = newSpaces;
@@ -74,7 +110,18 @@ function Grid(){
         }
     }
 
+    this.handleMouseInput = function(){
+        if (mouse.down){
+            var indx = Math.floor(mouse.x * GRID_WIDTH / WIDTH);
+            var indy = Math.floor(mouse.y * GRID_HEIGHT / HEIGHT);
+            this.spaces[indx][indy].alive = true;
+            this.spaces[indx][indy].frozen = true;
+        }
 
+        else {
+            this.unfreeze();
+        }
+    }
 
     function _initialize_spaces(){
         var colArray = [];
@@ -93,8 +140,11 @@ function Space(x, y){
     this.alive = Math.random() > .5;
     this.x = x;
     this.y = y;
+    this.frozen = false;
 
     this.getNewState = function(){
+        if (this.frozen) return this.alive;
+
         var neigbors = GRID.findNeighbors(this);
         if (this.alive) 
             return neigbors == 2 || neigbors == 3;
@@ -108,6 +158,8 @@ function Space(x, y){
 }
 
 function getNextFrame(){
+    GRID.handleMouseInput();
+
     if (Date.now() - last_updated > 1000. / FPS){
         ctx.clearRect(0, 0, WIDTH, HEIGHT);
         GRID.update();
