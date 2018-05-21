@@ -1,15 +1,17 @@
+/* Web setup */
 var canvas = document.getElementById('screen');
 var ctx = canvas.getContext('2d');
 
 var HEIGHT = window.innerHeight, WIDTH = window.innerWidth;
-canvas.height = HEIGHT;
-canvas.width = WIDTH;
+canvas.height = HEIGHT; canvas.width = WIDTH;
 
 window.addEventListener('resize', function(){
     HEIGHT = window.innerHeight, WIDTH = window.innerWidth;
     canvas.height = HEIGHT;
     canvas.width = WIDTH;
 });
+
+/* Input methods */
 var mouse = {x : WIDTH/2, y : HEIGHT / 2, down: false};
 
 canvas.addEventListener('mousedown',  function(e){
@@ -26,14 +28,15 @@ canvas.addEventListener('mousemove', function(e){
 });
 
 document.onkeydown = function(e){
-    if (e.keyCode == 82) GRID = new Grid();
-    if (e.keyCode == 67) GRID.clear()
+    if (e.keyCode == 82) GRID = new Grid(); // Pressing 'R' randomizes the grid
+    if (e.keyCode == 67) GRID.clear(); // Pressing 'C' clears the grid
+    if (e.keyCode == 70) {
+        if (!GRID.frozen) GRID.freeze();
+        else GRID.unfreeze();
+    }
 };
 
-
-
-
-
+/* Animation */
 const FPS = 10;
 window.requestAnimFrame = function(callback){
     return (
@@ -45,16 +48,18 @@ window.requestAnimFrame = function(callback){
         window.setTimeout(callback, 1000 / 60));
     }();
 
+/* Grid constants */
 const SPACE_LENGTH = 15;
 const GRID_WIDTH = Math.floor(WIDTH / SPACE_LENGTH);
 const GRID_HEIGHT = Math.floor(HEIGHT / SPACE_LENGTH);
-
 var GRID = new Grid();
 
 
 function Grid(){
     this.spaces = _initialize_spaces();
+    this.frozen = false;
 
+    // Computes the number of living neighbers surrouding a space
     this.findNeighbors = function(space){
         var x = space.x + GRID_WIDTH;
         var y = space.y + GRID_HEIGHT;
@@ -80,6 +85,14 @@ function Grid(){
             }
         }
     }
+    this.freeze = function(){
+        for (var i = 0; i < GRID_WIDTH; i++){
+            for (var j = 0; j < GRID_HEIGHT; j++){
+                this.spaces[i][j].frozen = true;
+            }
+        }
+        this.frozen = true;
+    }
 
     this.unfreeze = function(){
         for (var i = 0; i < GRID_WIDTH; i++){
@@ -87,10 +100,12 @@ function Grid(){
                 this.spaces[i][j].frozen = false;
             }
         }
+        this.frozen = false;
     }
    
     
     this.update = function(){
+        if (this.frozen) return;
         var newSpaces = _initialize_spaces();
 
         for (var i = 0; i < GRID_WIDTH; i++){
@@ -119,7 +134,9 @@ function Grid(){
         }
 
         else {
-            this.unfreeze();
+            // Only unfreeze mouse input
+            if (!this.frozen)
+                this.unfreeze();
         }
     }
 
@@ -153,11 +170,13 @@ function Space(x, y){
     }
 
     this.draw = function(){
+//        ctx.fillStyle = this.frozen ? '#110272' : 'black';
         if (this.alive) ctx.fillRect(x * SPACE_LENGTH, y * SPACE_LENGTH, SPACE_LENGTH, SPACE_LENGTH);
     }
 }
 
 function getNextFrame(){
+    // We don't want any framerate constraints on input 
     GRID.handleMouseInput();
 
     if (Date.now() - last_updated > 1000. / FPS){
