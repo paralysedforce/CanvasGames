@@ -59,7 +59,7 @@ const gravity = .4;
 
 // Objects 
 function Player(){
-    this.size = 10;
+    this.size = 20;
     this.speed = 10;
     this.inputBuffer = [];
 
@@ -92,13 +92,31 @@ function Player(){
         }
     }
 
-    this.land = function(land, thickness){
+    this.land = function(platform){
+        var land = platform.y;
+        var thickness = platform.dy;
+
         if (this.y + this.size > land && 
                 this.y < land + thickness){
             this.y = land - this.size;
             this.numJumps = 0;
             this.yvel = 0;
         }
+    }
+
+    this.bounceVert = function(platform){
+        this.yvel = 0;
+        this.y = platform.y + platform.dy;
+    }
+
+    this.bounceRight = function(platform){
+        this.xvel = 0;
+        this.x = platform.x + platform.dx
+    }
+
+    this.bounceLeft = function(platform){
+        this.xvel = 0;
+        this.x = platform.x - this.size;
     }
 
     this.move = function(){
@@ -127,10 +145,6 @@ function Platform(x, y, dx, dy){
         ctx.fillStyle = 'black';
         ctx.fillRect(x, y, dx, dy);
     }
-
-    this.intersects = function(x, y, dx, dy){
-        
-    }
 }
 
 
@@ -141,7 +155,7 @@ function Game(){
     function initializePlatforms(){
         var platforms = [];
         var ground = new Platform(0, BOTTOM, WIDTH, MARGIN);
-        var raised = new Platform(WIDTH/4, HEIGHT/2, WIDTH/2, MARGIN);
+        var raised = new Platform(WIDTH/4, HEIGHT/2, WIDTH/2, HEIGHT/2);
         platforms.push(ground);
         platforms.push(raised);
         return platforms
@@ -150,10 +164,33 @@ function Game(){
     this.detectCollisions = function(){
         for (var i = 0; i < this.platforms.length; i++){
             var platform = this.platforms[i];
-            if (this.player.x > platform.x && 
-                this.player.x + this.player.size < platform.x + platform.dx &&
-                this.player.y + this.player.size > platform.y)
-            this.player.land(platform.y, platform.dy);
+
+            if (this.player.x + this.player.size > platform.x && 
+                this.player.x < platform.x + platform.dx &&
+                this.player.y + this.player.size > platform.y &&
+                this.player.y < platform.y)
+            this.player.land(platform);
+
+            else if (this.player.x + this.player.size > platform.x && 
+                this.player.x < platform.x + platform.dx &&
+                this.player.y < platform.y + platform.dy &&
+                this.player.y + this.player.size > platform.y + platform.dy)
+            this.player.bounceVert(platform);
+
+            else if (this.player.y + this.player.size > platform.y &&
+                this.player.y < platform.y + platform.dy &&
+                this.player.x - this.player.speed < platform.x + platform.dx &&
+                this.player.x + this.player.size + this.player.speed  > platform.x + platform.dx)
+            this.player.bounceRight(platform);
+            
+
+            else if (this.player.y + this.player.size > platform.y &&
+                this.player.y < platform.y + platform.dy &&
+                this.player.x + this.player.size + this.player.speed > platform.x &&
+                this.player.x - this.player.speed < platform.x)
+            this.player.bounceLeft(platform);
+
+
         }
     }
 
