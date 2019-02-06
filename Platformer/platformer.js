@@ -124,7 +124,9 @@ function Player(){
         this.x += xvel;
         this.y -= this.yvel;
         
-        // Apply gravity
+    }
+
+    this.applyGravity = function(){
         if (this.y + this.size < BOTTOM)
             this.yvel -= gravity;
     }
@@ -155,8 +157,9 @@ function Game(){
     function initializePlatforms(){
         var platforms = [];
         var ground = new Platform(0, BOTTOM, WIDTH, MARGIN);
-        var raised = new Platform(WIDTH/4, HEIGHT/2, WIDTH/2, HEIGHT/2);
         platforms.push(ground);
+
+        var raised = new Platform(WIDTH/4, HEIGHT/2, WIDTH/2, HEIGHT/4);
         platforms.push(raised);
         return platforms
     }
@@ -168,23 +171,24 @@ function Game(){
             if (this.player.x + this.player.size > platform.x && 
                 this.player.x < platform.x + platform.dx &&
                 this.player.y + this.player.size > platform.y &&
-                this.player.y < platform.y)
+                this.player.y < platform.y &&
+                this.player.yvel <= 0)
             this.player.land(platform);
 
-            else if (this.player.x + this.player.size > platform.x && 
+            if (this.player.x + this.player.size > platform.x && 
                 this.player.x < platform.x + platform.dx &&
                 this.player.y < platform.y + platform.dy &&
-                this.player.y + this.player.size > platform.y + platform.dy)
+                this.player.y + this.player.size > platform.y + platform.dy &&
+                this.player.yvel >= 0)
             this.player.bounceVert(platform);
 
-            else if (this.player.y + this.player.size > platform.y &&
+            if (this.player.y + this.player.size > platform.y &&
                 this.player.y < platform.y + platform.dy &&
                 this.player.x - this.player.speed < platform.x + platform.dx &&
                 this.player.x + this.player.size + this.player.speed  > platform.x + platform.dx)
             this.player.bounceRight(platform);
-            
 
-            else if (this.player.y + this.player.size > platform.y &&
+            if (this.player.y + this.player.size > platform.y &&
                 this.player.y < platform.y + platform.dy &&
                 this.player.x + this.player.size + this.player.speed > platform.x &&
                 this.player.x - this.player.speed < platform.x)
@@ -197,6 +201,7 @@ function Game(){
     this.move = function(){
         this.player.move();
         this.detectCollisions();
+        this.player.applyGravity();
     }
 
     this.drawBackground = function(){
